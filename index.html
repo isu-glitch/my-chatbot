@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sage — Your Support Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── IMPORTANT: Replace this URL with your actual Railway URL ── */
+  :root {
+    --api: "https://my-chatbot-production-d303.up.railway.app";
+    --sage: #4a7c6e;
+    --sage-light: #e8f2ef;
+    --sage-mid: #b8d4cc;
+    --warm: #f7f3ee;
+    --warm-dark: #ede8e1;
+    --text: #2c2c2c;
+    --text-muted: #7a7a7a;
+    --crisis: #c0392b;
+    --crisis-bg: #fdf2f2;
+    --white: #ffffff;
+    --radius: 18px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── DISCLAIMER OVERLAY ── */
+  #disclaimer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(44, 44, 44, 0.55);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  #disclaimer-box {
+    background: var(--white);
+    border-radius: 24px;
+    padding: 40px 36px 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+  }
+
+  #disclaimer-box .leaf {
+    font-size: 32px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  #disclaimer-box h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+
+  #disclaimer-box p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  #disclaimer-box ul {
+    list-style: none;
+    margin: 14px 0 24px;
+  }
+
+  #disclaimer-box ul li {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 6px 0 6px 20px;
+    position: relative;
+    border-bottom: 1px solid var(--warm-dark);
+  }
+
+  #disclaimer-box ul li:last-child { border-bottom: none; }
+
+  #disclaimer-box ul li::before {
+    content: '·';
+    position: absolute;
+    left: 6px;
+    color: var(--sage);
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  #agree-btn {
+    width: 100%;
+    background: var(--sage);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  #agree-btn:hover { background: #3d6b5e; }
+  #agree-btn:active { transform: scale(0.98); }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--warm-dark);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--sage-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  header p {
+    font-size: 12px;
+    color: var(--sage);
+    margin-top: 2px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: #4caf7d;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(76,175,125,0.2);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(76,175,125,0.2); }
+    50% { box-shadow: 0 0 0 6px rgba(76,175,125,0.08); }
+  }
+
+  /* ── MESSAGES ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--sage-mid); border-radius: 4px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.user .bubble {
+    background: var(--sage);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.assistant .bubble {
+    background: var(--white);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .msg.crisis .bubble {
+    background: var(--crisis-bg);
+    border: 1px solid #f5c6c6;
+  }
+
+  .crisis-banner {
+    background: var(--crisis);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timestamp {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+
+  /* ── TYPING INDICATOR ── */
+  .typing-bubble {
+    background: var(--white);
+    border-radius: var(--radius);
+    border-bottom-left-radius: 4px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    align-self: flex-start;
+    animation: slideUp 0.3s ease;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--sage-mid);
+    border-radius: 50%;
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* ── INPUT AREA ── */
+  #input-area {
+    background: var(--white);
+    border-top: 1px solid var(--warm-dark);
+    padding: 14px 16px;
+    flex-shrink: 0;
+  }
+
+  #input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--warm);
+    border-radius: 16px;
+    padding: 8px 8px 8px 16px;
+    border: 1.5px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  #input-row:focus-within {
+    border-color: var(--sage-mid);
+  }
+
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    resize: none;
+    max-height: 120px;
+    min-height: 24px;
+    line-height: 1.5;
+    padding: 2px 0;
+  }
+
+  #user-input::placeholder { color: #b0ada8; }
+
+  #send-btn {
+    width: 38px;
+    height: 38px;
+    background: var(--sage);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.1s, opacity 0.2s;
+  }
+
+  #send-btn:hover { background: #3d6b5e; }
+  #send-btn:active { transform: scale(0.93); }
+  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #send-btn svg { pointer-events: none; }
+
+  #footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: #c0bcb7;
+    margin-top: 8px;
+  }
+
+  /* ── EMPTY STATE ── */
+  #empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 10px;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  #empty-state .big-leaf { font-size: 48px; margin-bottom: 8px; }
+
+  #empty-state h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+  }
+
+  #empty-state p { font-size: 14px; max-width: 280px; line-height: 1.6; }
+
+  .suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .chip {
+    background: var(--white);
+    border: 1px solid var(--warm-dark);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--sage);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .chip:hover {
+    background: var(--sage-light);
+    border-color: var(--sage-mid);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @media (max-width: 480px) {
+    .msg { max-width: 90%; }
+    #disclaimer-box { padding: 28px 22px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── DISCLAIMER MODAL ── -->
+<div id="disclaimer-overlay">
+  <div id="disclaimer-box">
+    <span class="leaf">🌿</span>
+    <h2>Before we begin</h2>
+    <p>Sage is an AI-powered emotional support companion — not a licensed therapist, psychologist, or medical professional.</p>
+    <ul>
+      <li>Nothing shared here is a diagnosis or medical advice</li>
+      <li>In an emergency, call your local emergency services immediately</li>
+      <li>Conversations may be stored securely for safety purposes</li>
+      <li>This is for general emotional support only</li>
+    </ul>
+    <button id="agree-btn" onclick="startChat()">I understand — begin</button>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="avatar">🌿</div>
+  <div>
+    <h1>Sage</h1>
+    <p>Support companion</p>
+  </div>
+  <div class="status-dot" title="Online"></div>
+</header>
+
+<!-- ── MESSAGES ── -->
+<div id="messages">
+  <div id="empty-state">
+    <div class="big-leaf">🌿</div>
+    <h3>Hi, I'm Sage</h3>
+    <p>A safe space to talk through what's on your mind. I'm here to listen.</p>
+    <div class="suggestion-chips">
+      <button class="chip" onclick="sendChip(this)">I've been feeling anxious</button>
+      <button class="chip" onclick="sendChip(this)">I'm having trouble sleeping</button>
+      <button class="chip" onclick="sendChip(this)">I feel overwhelmed lately</button>
+      <button class="chip" onclick="sendChip(this)">I just need to talk</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── INPUT AREA ── -->
+<div id="input-area">
+  <div id="input-row">
+    <textarea
+      id="user-input"
+      placeholder="Share what's on your mind…"
+      rows="1"
+      disabled
+      onkeydown="handleKey(event)"
+      oninput="autoResize(this)"
+    ></textarea>
+    <button id="send-btn" disabled onclick="sendMessage()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 8L14 8M14 8L9 3M14 8L9 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+  <p id="footer-note">Not a substitute for professional mental health care</p>
+</div>
+
+<script>
+  // ── CONFIG: change this to your Railway URL ──
+  const API_BASE = 'https://my-chatbot-production-d303.up.railway.app';
+
+  let history = [];
+  let sessionId = crypto.randomUUID();
+  let isWaiting = false;
+
+  function startChat() {
+    document.getElementById('disclaimer-overlay').style.display = 'none';
+    document.getElementById('user-input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    document.getElementById('user-input').focus();
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function sendChip(btn) {
+    document.getElementById('user-input').value = btn.textContent;
+    sendMessage();
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function removeEmptyState() {
+    const es = document.getElementById('empty-state');
+    if (es) es.remove();
+  }
+
+  function appendMessage(role, text, crisis = false) {
+    removeEmptyState();
+    const msgs = document.getElementById('messages');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + role + (crisis ? ' crisis' : '');
+
+    if (crisis && role === 'assistant') {
+      const banner = document.createElement('div');
+      banner.className = 'crisis-banner';
+      banner.innerHTML = '⚠ If you are in danger, please contact emergency services now';
+      wrap.appendChild(banner);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+
+    const ts = document.createElement('div');
+    ts.className = 'timestamp';
+    ts.textContent = getTime();
+    wrap.appendChild(ts);
+
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function showTyping() {
+    removeEmptyState();
+    const msgs = document.getElementById('messages');
+    const el = document.createElement('div');
+    el.id = 'typing';
+    el.className = 'typing-bubble';
+    el.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function hideTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
+    const text = input.value.trim();
+
+    if (!text || isWaiting) return;
+
+    isWaiting = true;
+    input.value = '';
+    input.style.height = 'auto';
+    btn.disabled = true;
+
+    appendMessage('user', text);
+    showTyping();
+
+    try {
+      const res = await fetch(API_BASE + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: text,
+          history: history
+        })
+      });
+
+      const data = await res.json();
+      hideTyping();
+
+      if (data.reply) {
+        appendMessage('assistant', data.reply, data.crisis);
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: data.reply });
+        // Keep history to last 20 messages to stay lean
+        if (history.length > 40) history = history.slice(-40);
+      } else {
+        appendMessage('assistant', "I'm sorry, something went wrong. Please try again.");
+      }
+
+    } catch (err) {
+      hideTyping();
+      appendMessage('assistant', "I'm having trouble connecting right now. Please check your connection and try again.");
+    }
+
+    isWaiting = false;
+    btn.disabled = false;
+    input.focus();
+  }
+</script>
+</body>
+</html>
