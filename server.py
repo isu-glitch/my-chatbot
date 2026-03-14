@@ -10,6 +10,7 @@ import os
 import uuid
 import logging
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
@@ -76,8 +77,9 @@ class ChatResponse(BaseModel):
 # ENDPOINTS
 # ─────────────────────────────────────────────
 
-@app.get("/health")
-def health_check():
+@app.get("/")
+def serve_frontend():
+    return FileResponse("index.html")
     """Simple liveness probe — no sensitive data returned."""
     return {"status": "ok"}
 
